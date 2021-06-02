@@ -1,6 +1,7 @@
 /NPB3.4-MPI/bin/*
 /NPB3.4-MPI/sys/setparams
 npbparams.h
+checkpoint.dat
 
 # Created by https://www.toptal.com/developers/gitignore/api/vim,linux,fortran
 # Edit at https://www.toptal.com/developers/gitignore?templates=vim,linux,fortran

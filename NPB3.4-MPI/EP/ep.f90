@@ -42,9 +42,30 @@
 !          R. F. Van der Wijngaart
 !---------------------------------------------------------------------
 
+subroutine mpi_checkpoint_create(comm,filename,fh,ierr)
+    use mpi
+    integer comm, ierr, fh
+    character*(*) filename
+    call mpi_file_open(comm,filename,MPI_MODE_CREATE+MPI_MODE_WRONLY,MPI_INFO_NULL,fh,ierr)
+end
+
+subroutine mpi_checkpoint_restore(comm,filename,fh,ierr)
+    use mpi
+    integer comm, ierr, fh
+    character*(*) filename
+    call mpi_file_open(comm,filename,MPI_MODE_RDONLY,MPI_INFO_NULL,fh,ierr)
+end
+
+subroutine mpi_checkpoint_close(file,ierr)
+    use mpi
+    integer ierr, file
+    call mpi_file_close(file,ierr)
+    write (*,*) 'Checkpoint finished!'
+end
 !---------------------------------------------------------------------
       program EMBAR
 !---------------------------------------------------------------------
+
 
 !   This is the MPI version of the APP Benchmark 1,
 !   the "embarassingly parallel" benchmark.
@@ -74,6 +95,8 @@
       double precision tsum(t_last+2), t1m(t_last+2),  &
      &                 tming(t_last+2), tmaxg(t_last+2)
       character        t_recs(t_last+2)*8
+
+      integer          checkpoint
 
       data             dum /1.d0, 1.d0, 1.d0/
 
@@ -142,6 +165,15 @@
          stop
       endif
 
+      call mpi_checkpoint_restore(comm_solve, 'checkpoint.dat', checkpoint, ierr)
+      if (ierr .eq. 0) then
+          call mpi_file_read(checkpoint, sx, 1, dp_type, MPI_STATUS_IGNORE, ierr)
+          call mpi_file_read(checkpoint, sy, 1, dp_type, MPI_STATUS_IGNORE, ierr)
+          call mpi_file_read(checkpoint, gc, 1, dp_type, MPI_STATUS_IGNORE, ierr)
+          call mpi_checkpoint_close(checkpoint, ierr)
+          write (*,*) 'after  ', node, ' sx ', sx, ' sy ', sy, ' gc ', gc
+          goto 1234
+      endif
 !   Call the random number generator functions and initialize
 !   the x-array to reduce the effects of paging on the timings.
 !   Also, call all mathematical functions that are used. Make
@@ -267,7 +299,16 @@
      &                   MPI_MAX, comm_solve, ierr)
       tm = x(1)
 
+      write (*,*) 'before ', node, ' sx ', sx, ' sy ', sy, ' gc ', gc
+      call mpi_checkpoint_create(comm_solve, 'checkpoint.dat', checkpoint, ierr)
       if (node.eq.root) then
+          call mpi_file_write(checkpoint, sx, 1, dp_type, MPI_STATUS_IGNORE, ierr)
+          call mpi_file_write(checkpoint, sy, 1, dp_type, MPI_STATUS_IGNORE, ierr)
+          call mpi_file_write(checkpoint, gc, 1, dp_type, MPI_STATUS_IGNORE, ierr)
+      endif
+      call mpi_checkpoint_close(checkpoint, ierr)
+
+1234  if (node.eq.root) then
          call verify(m, sx, sy, gc, verified, classv)
 
          nit = 0
