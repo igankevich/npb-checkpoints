@@ -11,7 +11,7 @@ OBJS = bt.o bt_data.o make_set.o initialize.o exact_solution.o \
        rhs.o solve_subs.o x_solve$(VEC).o y_solve$(VEC).o z_solve$(VEC).o \
        add.o error.o verify.o setup_mpi.o mpinpb.o \
        ${COMMON}/get_active_nprocs.o \
-       ${COMMON}/print_results.o ${COMMON}/timers.o
+       ${COMMON}/print_results.o ${COMMON}/timers.o ${COMMON}/mpi_checkpoint.o
 
 include ../sys/make.common
 

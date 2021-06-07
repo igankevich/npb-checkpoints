@@ -48,7 +48,7 @@ module mpi_checkpoint
             use mpi
             integer ierr, file
             call mpi_file_close(file,ierr)
-            write (*,*) 'Checkpoint finished!'
+            !write (*,*) 'Checkpoint finished!'
         end subroutine
 
 end module

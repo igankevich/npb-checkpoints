@@ -47,6 +47,7 @@
 
        use bt_data
        use mpinpb
+       use mpi_checkpoint
 
        implicit none
 
@@ -62,6 +63,7 @@
        character        t_recs(t_last+2)*8
 
        integer wr_interval
+       integer checkpoint, step_min
 
        data t_recs/'total', 'i/o', 'rhs', 'xsolve', 'ysolve', 'zsolve',  &
      &             'bpack', 'exch', 'xcomm', 'ycomm', 'zcomm',  &
@@ -210,7 +212,28 @@
 
        call timer_start(1)
 
-       do  step = 1, niter
+       step_min = 1
+       call mpi_checkpoint_restore(comm_setup, 'checkpoint.dat', checkpoint, error)
+       if (error .eq. 0) then
+           call mpi_file_read_ordered(checkpoint, step_min, 1, MPI_INTEGER, MPI_STATUS_IGNORE, error)
+           call mpi_file_read_ordered(checkpoint, u, size(u), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, error)
+           call mpi_file_read_ordered(checkpoint, rhs, size(rhs), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, error)
+           call mpi_bcast(dt, 1, dp_type, root, comm_setup, error)
+           call mpi_checkpoint_close(checkpoint, error)
+           write (*,*) 'restored from the checkpoint ', step_min, dt
+       endif
+
+       do  step = step_min, niter
+
+          if (mod(step, 20) .eq. 0 .or. step .eq. niter .or. step .eq. 1) then
+              call mpi_checkpoint_create(comm_setup, 'checkpoint.dat', checkpoint, error)
+              !if (node.eq.root) then
+              !endif
+              call mpi_file_write_ordered(checkpoint, step, 1, MPI_INTEGER, MPI_STATUS_IGNORE, error)
+              call mpi_file_write_ordered(checkpoint, u, size(u), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, error)
+              call mpi_file_write_ordered(checkpoint, rhs, size(rhs), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, error)
+              call mpi_checkpoint_close(checkpoint, error)
+          endif
 
           if (node .eq. root) then
              if (mod(step, 20) .eq. 0 .or. step .eq. niter .or.  &
@@ -236,6 +259,7 @@
                   idump = idump + 1
               endif
           endif
+
        end do
 
        call timer_start(2)
