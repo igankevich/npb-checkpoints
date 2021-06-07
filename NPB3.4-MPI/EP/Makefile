@@ -5,7 +5,7 @@ BENCHMARKU=EP
 include ../config/make.def
 
 OBJS = ep.o ep_data.o verify.o mpinpb.o \
-	${COMMON}/print_results.o ${COMMON}/${RAND}.o ${COMMON}/timers.o
+	${COMMON}/print_results.o ${COMMON}/${RAND}.o ${COMMON}/timers.o ${COMMON}/mpi_checkpoint.o
 
 include ../sys/make.common
 

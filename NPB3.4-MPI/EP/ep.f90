@@ -42,26 +42,6 @@
 !          R. F. Van der Wijngaart
 !---------------------------------------------------------------------
 
-subroutine mpi_checkpoint_create(comm,filename,fh,ierr)
-    use mpi
-    integer comm, ierr, fh
-    character*(*) filename
-    call mpi_file_open(comm,filename,MPI_MODE_CREATE+MPI_MODE_WRONLY,MPI_INFO_NULL,fh,ierr)
-end
-
-subroutine mpi_checkpoint_restore(comm,filename,fh,ierr)
-    use mpi
-    integer comm, ierr, fh
-    character*(*) filename
-    call mpi_file_open(comm,filename,MPI_MODE_RDONLY,MPI_INFO_NULL,fh,ierr)
-end
-
-subroutine mpi_checkpoint_close(file,ierr)
-    use mpi
-    integer ierr, file
-    call mpi_file_close(file,ierr)
-    write (*,*) 'Checkpoint finished!'
-end
 !---------------------------------------------------------------------
       program EMBAR
 !---------------------------------------------------------------------
@@ -72,6 +52,7 @@ end
 
       use ep_data
       use mpinpb
+      use mpi_checkpoint
 
       implicit none
 
