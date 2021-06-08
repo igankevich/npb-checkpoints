@@ -7,7 +7,8 @@ include ../config/make.def
 include ../sys/make.common
 
 OBJS = ft.o ft_data.o mpinpb.o ${COMMON}/get_active_nprocs.o \
-	${COMMON}/${RAND}.o ${COMMON}/print_results.o ${COMMON}/timers.o
+	${COMMON}/${RAND}.o ${COMMON}/print_results.o ${COMMON}/timers.o \
+	${COMMON}/mpi_checkpoint.o
 
 ${PROGRAM}: config ${OBJS}
 	${FLINK} ${FLINKFLAGS} -o ${PROGRAM} ${OBJS} ${FMPI_LIB}
