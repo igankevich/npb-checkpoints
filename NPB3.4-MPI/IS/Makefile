@@ -6,7 +6,7 @@ include ../config/make.def
 
 include ../sys/make.common
 
-OBJS = is.o ${COMMON}/c_print_results.o ${COMMON}/c_timers.o
+OBJS = is.o ${COMMON}/c_print_results.o ${COMMON}/c_timers.o ${COMMON}/mpi_checkpoint_c.o
 
 
 ${PROGRAM}: config ${OBJS}
