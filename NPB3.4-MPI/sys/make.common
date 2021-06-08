@@ -1,6 +1,6 @@
 PROGRAM  = $(BINDIR)/$(BENCHMARK).$(CLASS).x
 FCOMPILE = $(MPIFC) -c $(FMPI_INC) -I../common $(FFLAGS)
-CCOMPILE = $(MPICC) -c $(CMPI_INC) $(CFLAGS)
+CCOMPILE = $(MPICC) -c $(CMPI_INC) -I../common $(CFLAGS)
 
 # Class "U" is used internally by the setparams program to mean
 # "unknown". This means that if you don't specify CLASS=
@@ -43,6 +43,9 @@ ${COMMON}/c_timers.o: ${COMMON}/c_timers.c
 
 ${COMMON}/mpi_checkpoint.o: ${COMMON}/mpi_checkpoint.f90
 	cd ${COMMON}; ${FCOMPILE} mpi_checkpoint.f90
+
+${COMMON}/mpi_checkpoint_c.o: ${COMMON}/mpi_checkpoint.c ${COMMON}/mpi_checkpoint.h
+	cd ${COMMON}; ${CCOMPILE} mpi_checkpoint.c -o mpi_checkpoint_c.o
 
 # Normally setparams updates npbparams.h only if the settings (CLASS)
 # have changed. However, we also want to update if the compile options
