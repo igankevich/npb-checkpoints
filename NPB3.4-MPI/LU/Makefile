@@ -11,7 +11,7 @@ OBJS = lu.o lu_data$(VEC).o init_comm.o read_input.o bcast_inputs.o \
        exchange_4.o exchange_5.o exchange_6.o rhs.o l2norm.o \
        jacld$(VEC).o blts$(VEC).o jacu$(VEC).o buts$(VEC).o mpinpb.o \
        error.o pintgr.o verify.o ${COMMON}/get_active_nprocs.o \
-       ${COMMON}/print_results.o ${COMMON}/timers.o
+       ${COMMON}/print_results.o ${COMMON}/timers.o ${COMMON}/mpi_checkpoint.o
 
 include ../sys/make.common
 
@@ -28,7 +28,7 @@ ${PROGRAM}: config
 	fi
 
 exec: $(OBJS)
-	${FLINK} ${FLINKFLAGS} -o ${PROGRAM} ${OBJS} ${FMPI_LIB}
+	${FLINK} ${FLINKFLAGS} -I${COMMON} -o ${PROGRAM} ${OBJS} ${FMPI_LIB}
 
 .f90.o :
 	${FCOMPILE} $<
@@ -58,7 +58,7 @@ rhs.o:		rhs.f90 lu_data.o
 setbv.o:	setbv.f90 lu_data.o
 setiv.o:	setiv.f90 lu_data.o
 setcoeff.o:	setcoeff.f90 lu_data.o
-ssor$(VEC).o:	ssor$(VEC).f90 lu_data.o mpinpb.o
+ssor$(VEC).o:	ssor$(VEC).f90 lu_data.o mpinpb.o ${COMMON}/mpi_checkpoint.o
 subdomain.o:	subdomain.f90 lu_data.o mpinpb.o
 verify.o:	verify.f90 lu_data.o
 lu_data.o:      lu_data$(VEC).f90 mpinpb.o npbparams.h
