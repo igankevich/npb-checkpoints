@@ -218,9 +218,8 @@
            call mpi_file_read_ordered(checkpoint, step_min, 1, MPI_INTEGER, MPI_STATUS_IGNORE, error)
            call mpi_file_read_ordered(checkpoint, u, size(u), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, error)
            call mpi_file_read_ordered(checkpoint, rhs, size(rhs), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, error)
-           call mpi_bcast(dt, 1, dp_type, root, comm_setup, error)
            call mpi_checkpoint_close(checkpoint, error)
-           write (*,*) 'restored from the checkpoint ', step_min, dt
+           write (*,*) 'restored from the checkpoint ', step_min
        endif
 
        do  step = step_min, niter
