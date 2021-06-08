@@ -54,6 +54,7 @@
       use mg_data
       use mg_fields
       use mpinpb
+      use mpi_checkpoint
 
       implicit none
 
@@ -73,6 +74,7 @@
       logical verified
 
       integer ierr, fstatus
+      integer checkpoint, it_min
 
       double precision tsum(t_last+2), t1(t_last+2),  &
      &                 tming(t_last+2), tmaxg(t_last+2)
@@ -280,7 +282,26 @@
       old2 = rnm2
       oldu = rnmu
 
-      do  it=1,nit
+      it_min = 1
+      call mpi_checkpoint_restore(comm_work, 'checkpoint.dat', checkpoint, ierr)
+      if (ierr .eq. 0) then
+          call mpi_file_read_ordered(checkpoint, it_min, 1, MPI_INTEGER, MPI_STATUS_IGNORE, ierr)
+          call mpi_file_read_ordered(checkpoint, u, size(u), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
+          call mpi_file_read_ordered(checkpoint, v, size(v), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
+          call mpi_file_read_ordered(checkpoint, r, size(r), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
+          call mpi_checkpoint_close(checkpoint, ierr)
+          write (*,*) 'restored from the checkpoint ', me, it_min
+      endif
+
+      do  it=it_min,nit
+         if (it.eq.1 .or. it.eq.nit .or. mod(it,5).eq.0) then
+             call mpi_checkpoint_create(comm_work, 'checkpoint.dat', checkpoint, ierr)
+             call mpi_file_write_ordered(checkpoint, it, 1, MPI_INTEGER, MPI_STATUS_IGNORE, ierr)
+             call mpi_file_write_ordered(checkpoint, u, size(u), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
+             call mpi_file_write_ordered(checkpoint, v, size(v), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
+             call mpi_file_write_ordered(checkpoint, r, size(r), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
+             call mpi_checkpoint_close(checkpoint, ierr)
+         endif
          if (it.eq.1 .or. it.eq.nit .or. mod(it,5).eq.0) then
             if (me .eq. root) write(*,80) it
    80       format('  iter ',i4)

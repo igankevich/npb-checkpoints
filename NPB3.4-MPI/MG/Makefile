@@ -6,7 +6,7 @@ include ../config/make.def
 
 OBJS = mg.o mg_data.o mpinpb.o ${COMMON}/print_results.o  \
        ${COMMON}/get_active_nprocs.o \
-       ${COMMON}/${RAND}.o ${COMMON}/timers.o
+       ${COMMON}/${RAND}.o ${COMMON}/timers.o ${COMMON}/mpi_checkpoint.o
 
 include ../sys/make.common
 
