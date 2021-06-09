@@ -60,7 +60,8 @@
       implicit none
 
       integer status(MPI_STATUS_SIZE), request, ierr
-      integer checkpoint, it_min
+      integer checkpoint, it_min, state
+      character(len=255) :: checkpoint_type
 
       integer            i, j, k, it
 
@@ -308,13 +309,20 @@
       call timer_clear( 1 )
       call timer_start( 1 )
 
+      checkpoint_type = 'mpi'
+      call getenv('CHECKPOINT', checkpoint_type)
       it_min = 1
-      call mpi_checkpoint_restore(comm_solve, 'checkpoint.dat', checkpoint, ierr)
-      if (ierr .eq. 0) then
-          call mpi_file_read_ordered(checkpoint, it_min, 1, MPI_INTEGER, MPI_STATUS_IGNORE, ierr)
-          call mpi_file_read_ordered(checkpoint, x, size(x), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
-          call mpi_checkpoint_close(checkpoint, ierr)
-          write (*,*) 'restored from the checkpoint ', me, it_min, rnorm, zeta
+      if (checkpoint_type == 'dmtcp') then
+          write (*,*) 'CHECKPOINT=', me, checkpoint_type
+          !call system('dmtcp_command --bccheckpoint')
+      else
+          call mpi_checkpoint_restore(comm_solve, 'checkpoint.dat', checkpoint, ierr)
+          if (ierr .eq. 0) then
+              call mpi_file_read_ordered(checkpoint, it_min, 1, MPI_INTEGER, MPI_STATUS_IGNORE, ierr)
+              call mpi_file_read_ordered(checkpoint, x, size(x), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
+              call mpi_checkpoint_close(checkpoint, ierr)
+              write (*,*) 'restored from the checkpoint ', me, it_min, rnorm, zeta
+          endif
       endif
 
 !---------------------------------------------------------------------
@@ -325,10 +333,17 @@
       do it = it_min, niter
 
          if (mod(it, 1) .eq. 0 .or. it .eq. niter .or. it .eq. 1) then
-             call mpi_checkpoint_create(comm_solve, 'checkpoint.dat', checkpoint, ierr)
-             call mpi_file_write_ordered(checkpoint, it, 1, MPI_INTEGER, MPI_STATUS_IGNORE, ierr)
-             call mpi_file_write_ordered(checkpoint, x, size(x), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
-             call mpi_checkpoint_close(checkpoint, ierr)
+             if (checkpoint_type == 'dmtcp') then
+                 if (me .eq. root) then
+                     call system('dmtcp_command --bccheckpoint', state)
+                 endif
+                 call mpi_barrier(comm_solve, ierr)
+             else
+                 call mpi_checkpoint_create(comm_solve, 'checkpoint.dat', checkpoint, ierr)
+                 call mpi_file_write_ordered(checkpoint, it, 1, MPI_INTEGER, MPI_STATUS_IGNORE, ierr)
+                 call mpi_file_write_ordered(checkpoint, x, size(x), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
+                 call mpi_checkpoint_close(checkpoint, ierr)
+             endif
          endif
 !---------------------------------------------------------------------
 !  The call to the conjugate gradient routine:
