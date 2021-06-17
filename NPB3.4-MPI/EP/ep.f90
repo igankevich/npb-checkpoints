@@ -146,15 +146,15 @@
          stop
       endif
 
-      call mpi_checkpoint_restore(comm_solve, 'checkpoint.dat', checkpoint, ierr)
+      call mpi_checkpoint_restore(comm_solve, checkpoint, ierr)
       if (ierr .eq. 0) then
           call mpi_file_read(checkpoint, sx, 1, dp_type, MPI_STATUS_IGNORE, ierr)
           call mpi_file_read(checkpoint, sy, 1, dp_type, MPI_STATUS_IGNORE, ierr)
           call mpi_file_read(checkpoint, gc, 1, dp_type, MPI_STATUS_IGNORE, ierr)
           call mpi_checkpoint_close(checkpoint, ierr)
-          write (*,*) 'after  ', node, ' sx ', sx, ' sy ', sy, ' gc ', gc
           goto 1234
       endif
+
 !   Call the random number generator functions and initialize
 !   the x-array to reduce the effects of paging on the timings.
 !   Also, call all mathematical functions that are used. Make
@@ -280,14 +280,15 @@
      &                   MPI_MAX, comm_solve, ierr)
       tm = x(1)
 
-      write (*,*) 'before ', node, ' sx ', sx, ' sy ', sy, ' gc ', gc
-      call mpi_checkpoint_create(comm_solve, 'checkpoint.dat', checkpoint, ierr)
-      if (node.eq.root) then
-          call mpi_file_write(checkpoint, sx, 1, dp_type, MPI_STATUS_IGNORE, ierr)
-          call mpi_file_write(checkpoint, sy, 1, dp_type, MPI_STATUS_IGNORE, ierr)
-          call mpi_file_write(checkpoint, gc, 1, dp_type, MPI_STATUS_IGNORE, ierr)
+      call mpi_checkpoint_create(comm_solve, 'ep', checkpoint, ierr)
+      if (ierr .eq. 0) then
+          if (node.eq.root) then
+              call mpi_file_write(checkpoint, sx, 1, dp_type, MPI_STATUS_IGNORE, ierr)
+              call mpi_file_write(checkpoint, sy, 1, dp_type, MPI_STATUS_IGNORE, ierr)
+              call mpi_file_write(checkpoint, gc, 1, dp_type, MPI_STATUS_IGNORE, ierr)
+          endif
+          call mpi_checkpoint_close(checkpoint, ierr)
       endif
-      call mpi_checkpoint_close(checkpoint, ierr)
 
 1234  if (node.eq.root) then
          call verify(m, sx, sy, gc, verified, classv)

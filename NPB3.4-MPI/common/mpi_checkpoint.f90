@@ -28,13 +28,37 @@ module mpi_checkpoint
 
         subroutine mpi_checkpoint_create(comm,filename,fh,ierr)
             use mpi
-            integer comm, ierr, fh, rank, unused
+            integer comm, ierr, fh, rank, state
             character*(*) filename
             character(4096) newfilename
-            newfilename = timestamp_filename(filename)
+            character(128) no_checkpoint
+            character(4096)  checkpoint_filename
+            ! return if no checkpoint is requested
+            call getenv('MPI_NO_CHECKPOINT', no_checkpoint)
+            if (no_checkpoint /= '') then
+                ierr = MPI_ERR_OTHER
+                return
+            endif
+            call mpi_comm_rank(comm,rank,ierr)
+            ! create checkpoint using DMTCP
+            checkpoint_filename = 'mpi'
+            call getenv('MPI_CHECKPOINT', checkpoint_filename)
+            if (checkpoint_filename == 'dmtcp') then
+                call mpi_barrier(comm, ierr)
+                if (rank .eq. 0) then
+                    write (*,*) 'rank ', rank, ' creating checkpoint using DMTCP'
+                    call system('dmtcp_command --bccheckpoint', state)
+                endif
+                call mpi_barrier(comm, ierr)
+                return
+            endif
+            ! create checkpoint manually
+            if (rank .eq. 0) then
+                newfilename = timestamp_filename(filename)
+            endif
+            call mpi_bcast(newfilename,4096,MPI_CHARACTER,0,comm,ierr)
             call mpi_file_open(comm,newfilename,MPI_MODE_CREATE+MPI_MODE_WRONLY,MPI_INFO_NULL,fh,ierr)
             if (ierr .eq. 0) then
-                call mpi_comm_rank(comm,rank,unused)
                 write (*,20) rank, trim(newfilename)
 20              format('rank ',i3,' creating ',a)
             endif
@@ -44,6 +68,12 @@ module mpi_checkpoint
             integer comm, ierr, fh
             character(4096) filename
             call getenv('MPI_CHECKPOINT', filename)
+            ! do nothing if DMTCP checkpoints are used
+            if (filename == 'dmtcp') then
+                ierr = MPI_ERR_OTHER
+                return
+            endif
+            ! restore manually
             call mpi_checkpoint_restore_filename(comm,trim(filename),fh,ierr)
         end subroutine
 

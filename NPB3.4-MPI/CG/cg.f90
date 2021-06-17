@@ -61,7 +61,7 @@
 
       integer status(MPI_STATUS_SIZE), request, ierr
       integer checkpoint, it_min, state
-      character(len=255) :: checkpoint_filename
+      character(4096) :: checkpoint_filename
 
       integer            i, j, k, it
 
@@ -339,9 +339,11 @@
                  call mpi_barrier(comm_solve, ierr)
              else
                  call mpi_checkpoint_create(comm_solve, 'cg', checkpoint, ierr)
-                 call mpi_file_write_ordered(checkpoint, it, 1, MPI_INTEGER, MPI_STATUS_IGNORE, ierr)
-                 call mpi_file_write_ordered(checkpoint, x, size(x), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
-                 call mpi_checkpoint_close(checkpoint, ierr)
+                 if (ierr .eq. 0) then
+                     call mpi_file_write_ordered(checkpoint, it, 1, MPI_INTEGER, MPI_STATUS_IGNORE, ierr)
+                     call mpi_file_write_ordered(checkpoint, x, size(x), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
+                     call mpi_checkpoint_close(checkpoint, ierr)
+                 endif
              endif
          endif
 !---------------------------------------------------------------------
