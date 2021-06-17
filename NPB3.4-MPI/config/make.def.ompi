@@ -46,7 +46,7 @@ FMPI_INC =
 #---------------------------------------------------------------------------
 # Global *compile time* flags for Fortran programs
 #---------------------------------------------------------------------------
-FFLAGS	= -O3
+FFLAGS	= -O3 -march=native
 
 #---------------------------------------------------------------------------
 # Global *link time* flags. Flags for increasing maximum executable 
@@ -92,7 +92,7 @@ CMPI_INC =
 #---------------------------------------------------------------------------
 # Global *compile time* flags for C programs
 #---------------------------------------------------------------------------
-CFLAGS	= -O3
+CFLAGS	= -O3 -march=native
 
 #---------------------------------------------------------------------------
 # Global *link time* flags. Flags for increasing maximum executable 
@@ -119,7 +119,7 @@ CLINKFLAGS = $(CFLAGS)
 # this compiler go here also; typically there are few flags required; hence 
 # there are no separate macros provided for such flags.
 #---------------------------------------------------------------------------
-CC	= gcc -g
+CC	= gcc
 
 
 #---------------------------------------------------------------------------

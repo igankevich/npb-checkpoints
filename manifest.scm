@@ -9,4 +9,5 @@
     (@ (gnu packages dmtcp) dmtcp) ;; checkpoints
     (@ (gnu packages compression) gzip) ;; for dmtcp
     (list (@ (gnu packages dns) isc-bind) "utils") ;; for dmtcp
+    (@ (gnu packages time) time) ;; benchmarks
     ))
