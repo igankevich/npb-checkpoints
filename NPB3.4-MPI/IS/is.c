@@ -1097,8 +1097,8 @@ int main( int argc, char **argv )
 
 
     MPI_File checkpoint = MPI_FILE_NULL;
-    int ret = MPI_Checkpoint_restore(MPI_COMM_WORLD, "checkpoint.dat", &checkpoint);
-    if (ret == 0) {
+    int ret = MPI_Checkpoint_restore(MPI_COMM_WORLD, &checkpoint);
+    if (ret == MPI_SUCCESS) {
         MPI_File_read_ordered(checkpoint, &iteration_min, 1, MPI_INT, MPI_STATUS_IGNORE);
         MPI_File_read_ordered(checkpoint, key_array, size_of_buffers, MP_KEY_TYPE, MPI_STATUS_IGNORE);
         MPI_File_read_ordered(checkpoint, key_buff1, size_of_buffers, MP_KEY_TYPE, MPI_STATUS_IGNORE);
@@ -1110,13 +1110,15 @@ int main( int argc, char **argv )
     for( iteration=iteration_min; iteration<=MAX_ITERATIONS; iteration++ )
     {
         if( my_rank == 0 && CLASS != 'S' ) printf( "        %d\n", iteration );
-        MPI_Checkpoint_create(MPI_COMM_WORLD, "checkpoint.dat", &checkpoint);
-        MPI_File_write_ordered(checkpoint, &iteration, 1, MPI_INT, MPI_STATUS_IGNORE);
-        MPI_File_write_ordered(checkpoint, key_array, size_of_buffers, MP_KEY_TYPE, MPI_STATUS_IGNORE);
-        MPI_File_write_ordered(checkpoint, key_buff1, size_of_buffers, MP_KEY_TYPE, MPI_STATUS_IGNORE);
-        MPI_File_write_ordered(checkpoint, key_buff2, size_of_buffers, MP_KEY_TYPE, MPI_STATUS_IGNORE);
-        MPI_File_write_ordered(checkpoint, &passed_verification, 1, MPI_INT, MPI_STATUS_IGNORE);
-        MPI_Checkpoint_close(&checkpoint);
+        int ret = MPI_Checkpoint_create(MPI_COMM_WORLD, "is", &checkpoint);
+        if (ret == MPI_SUCCESS) {
+            MPI_File_write_ordered(checkpoint, &iteration, 1, MPI_INT, MPI_STATUS_IGNORE);
+            MPI_File_write_ordered(checkpoint, key_array, size_of_buffers, MP_KEY_TYPE, MPI_STATUS_IGNORE);
+            MPI_File_write_ordered(checkpoint, key_buff1, size_of_buffers, MP_KEY_TYPE, MPI_STATUS_IGNORE);
+            MPI_File_write_ordered(checkpoint, key_buff2, size_of_buffers, MP_KEY_TYPE, MPI_STATUS_IGNORE);
+            MPI_File_write_ordered(checkpoint, &passed_verification, 1, MPI_INT, MPI_STATUS_IGNORE);
+            MPI_Checkpoint_close(&checkpoint);
+        }
         rank( iteration );
     }
 

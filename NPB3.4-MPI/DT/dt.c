@@ -660,11 +660,13 @@ int ProcessNodes(DGraph *dg,int me){
     verified=verify(dg->name,chksum);
   }
   MPI_File checkpoint = MPI_FILE_NULL;
-  MPI_Checkpoint_create(MPI_COMM_WORLD, "checkpoint.dat", &checkpoint);
-  if (me == 0) {
+  int ret = MPI_Checkpoint_create(MPI_COMM_WORLD, "dt", &checkpoint);
+  if (ret == MPI_SUCCESS) {
+    if (me == 0) {
       MPI_File_write(checkpoint, &chksum, 1, MPI_DOUBLE, MPI_STATUS_IGNORE);
+    }
+    MPI_Checkpoint_close(&checkpoint);
   }
-  MPI_Checkpoint_close(&checkpoint);
 return verified;
 }
 
@@ -729,8 +731,8 @@ int main(int argc,char **argv ){
       timer_start(0);
     }
     MPI_File checkpoint = MPI_FILE_NULL;
-    int ret = MPI_Checkpoint_restore(MPI_COMM_WORLD, "checkpoint.dat", &checkpoint);
-    if (ret == 0) {
+    int ret = MPI_Checkpoint_restore(MPI_COMM_WORLD, &checkpoint);
+    if (ret == MPI_SUCCESS) {
         double chksum = 0;
         MPI_File_read(checkpoint, &chksum, 1, MPI_DOUBLE, MPI_STATUS_IGNORE);
         MPI_Checkpoint_close(&checkpoint);

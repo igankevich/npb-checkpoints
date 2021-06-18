@@ -50,6 +50,7 @@ module mpi_checkpoint
                     call system('dmtcp_command --bccheckpoint', state)
                 endif
                 call mpi_barrier(comm, ierr)
+                ierr = MPI_ERR_OTHER
                 return
             endif
             ! create checkpoint manually

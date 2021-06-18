@@ -77,7 +77,7 @@
       call timer_start(1)
 
       istep_min = 1
-      call mpi_checkpoint_restore(comm_solve, 'checkpoint.dat', checkpoint, IERROR)
+      call mpi_checkpoint_restore(comm_solve, checkpoint, IERROR)
       if (IERROR .eq. 0) then
           call mpi_file_read_ordered(checkpoint, istep_min, 1, MPI_INTEGER, MPI_STATUS_IGNORE, IERROR)
           call mpi_file_read_ordered(checkpoint, rsdnm, size(rsdnm), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, IERROR)
@@ -96,17 +96,19 @@
 !---------------------------------------------------------------------
       do istep = istep_min, niter
 
-         if (mod(istep, 20) .eq. 0 .or. istep .eq. niter .or. istep .eq. 1) then
-             call mpi_checkpoint_create(comm_solve, 'checkpoint.dat', checkpoint, IERROR)
-             call mpi_file_write_ordered(checkpoint, istep, 1, MPI_INTEGER, MPI_STATUS_IGNORE, IERROR)
-             call mpi_file_write_ordered(checkpoint, rsdnm, size(rsdnm), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, IERROR)
-             call mpi_file_write_ordered(checkpoint, errnm, size(errnm), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, IERROR)
-             call mpi_file_write_ordered(checkpoint, frc, 1, MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, IERROR)
-             call mpi_file_write_ordered(checkpoint, u, size(u), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, IERROR)
-             call mpi_file_write_ordered(checkpoint, rsd, size(rsd), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, IERROR)
-             call mpi_file_write_ordered(checkpoint, frct, size(frct), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, IERROR)
-             call mpi_file_write_ordered(checkpoint, flux, size(flux), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, IERROR)
-             call mpi_checkpoint_close(checkpoint, IERROR)
+         if (mod(istep, niter/5) .eq. 0 .or. istep .eq. niter .or. istep .eq. 1) then
+             call mpi_checkpoint_create(comm_solve, 'lu', checkpoint, IERROR)
+             if (IERROR .eq. 0) then
+                 call mpi_file_write_ordered(checkpoint, istep, 1, MPI_INTEGER, MPI_STATUS_IGNORE, IERROR)
+                 call mpi_file_write_ordered(checkpoint, rsdnm, size(rsdnm), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, IERROR)
+                 call mpi_file_write_ordered(checkpoint, errnm, size(errnm), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, IERROR)
+                 call mpi_file_write_ordered(checkpoint, frc, 1, MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, IERROR)
+                 call mpi_file_write_ordered(checkpoint, u, size(u), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, IERROR)
+                 call mpi_file_write_ordered(checkpoint, rsd, size(rsd), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, IERROR)
+                 call mpi_file_write_ordered(checkpoint, frct, size(frct), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, IERROR)
+                 call mpi_file_write_ordered(checkpoint, flux, size(flux), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, IERROR)
+                 call mpi_checkpoint_close(checkpoint, IERROR)
+             endif
          endif
 
          if (id .eq. 0) then

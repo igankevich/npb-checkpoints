@@ -146,7 +146,7 @@
       if (timers_enabled) call timer_stop(T_fft)
 
       iter_min = 1
-      call mpi_checkpoint_restore(comm_solve, 'checkpoint.dat', checkpoint, ierr)
+      call mpi_checkpoint_restore(comm_solve, checkpoint, ierr)
       if (ierr .eq. 0) then
           call mpi_file_read_ordered(checkpoint, iter_min, 1, MPI_INTEGER, MPI_STATUS_IGNORE, ierr)
           call mpi_file_read_ordered(checkpoint, sums, size(sums), MPI_DOUBLE_COMPLEX, MPI_STATUS_IGNORE, ierr)
@@ -160,15 +160,17 @@
 
       do iter = iter_min, niter
 
-         if (mod(iter, 1) .eq. 0 .or. iter .eq. niter .or. iter .eq. 1) then
-             call mpi_checkpoint_create(comm_solve, 'checkpoint.dat', checkpoint, ierr)
-             call mpi_file_write_ordered(checkpoint, iter, 1, MPI_INTEGER, MPI_STATUS_IGNORE, ierr)
-             call mpi_file_write_ordered(checkpoint, sums, size(sums), MPI_DOUBLE_COMPLEX, MPI_STATUS_IGNORE, ierr)
-             call mpi_file_write_ordered(checkpoint, u, size(u), MPI_DOUBLE_COMPLEX, MPI_STATUS_IGNORE, ierr)
-             call mpi_file_write_ordered(checkpoint, u0, size(u0), MPI_DOUBLE_COMPLEX, MPI_STATUS_IGNORE, ierr)
-             call mpi_file_write_ordered(checkpoint, u1, size(u1), MPI_DOUBLE_COMPLEX, MPI_STATUS_IGNORE, ierr)
-             call mpi_file_write_ordered(checkpoint, u2, size(u2), MPI_DOUBLE_COMPLEX, MPI_STATUS_IGNORE, ierr)
-             call mpi_checkpoint_close(checkpoint, ierr)
+         if (mod(iter, niter/5) .eq. 0 .or. iter .eq. niter .or. iter .eq. 1) then
+             call mpi_checkpoint_create(comm_solve, 'ft', checkpoint, ierr)
+             if (ierr .eq. 0) then
+                 call mpi_file_write_ordered(checkpoint, iter, 1, MPI_INTEGER, MPI_STATUS_IGNORE, ierr)
+                 call mpi_file_write_ordered(checkpoint, sums, size(sums), MPI_DOUBLE_COMPLEX, MPI_STATUS_IGNORE, ierr)
+                 call mpi_file_write_ordered(checkpoint, u, size(u), MPI_DOUBLE_COMPLEX, MPI_STATUS_IGNORE, ierr)
+                 call mpi_file_write_ordered(checkpoint, u0, size(u0), MPI_DOUBLE_COMPLEX, MPI_STATUS_IGNORE, ierr)
+                 call mpi_file_write_ordered(checkpoint, u1, size(u1), MPI_DOUBLE_COMPLEX, MPI_STATUS_IGNORE, ierr)
+                 call mpi_file_write_ordered(checkpoint, u2, size(u2), MPI_DOUBLE_COMPLEX, MPI_STATUS_IGNORE, ierr)
+                 call mpi_checkpoint_close(checkpoint, ierr)
+             endif
          endif
 
          if (timers_enabled) call timer_start(T_evolve)
