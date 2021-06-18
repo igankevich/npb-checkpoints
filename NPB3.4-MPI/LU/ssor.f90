@@ -14,7 +14,6 @@
       use lu_data
       use mpinpb
       use timing
-      use mpi_checkpoint
 
       implicit none
 
@@ -97,7 +96,7 @@
       do istep = istep_min, niter
 
          if (mod(istep, niter/5) .eq. 0 .or. istep .eq. niter .or. istep .eq. 1) then
-             call mpi_checkpoint_create(comm_solve, 'lu', checkpoint, IERROR)
+             call mpi_checkpoint_create(comm_solve, checkpoint, IERROR)
              if (IERROR .eq. 0) then
                  call mpi_file_write_ordered(checkpoint, istep, 1, MPI_INTEGER, MPI_STATUS_IGNORE, IERROR)
                  call mpi_file_write_ordered(checkpoint, rsdnm, size(rsdnm), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, IERROR)

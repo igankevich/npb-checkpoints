@@ -47,7 +47,6 @@
 
        use bt_data
        use mpinpb
-       use mpi_checkpoint
 
        implicit none
 
@@ -224,7 +223,7 @@
        do  step = step_min, niter
 
           if (mod(step, max(1,niter/5)) .eq. 0 .or. step .eq. niter .or. step .eq. 1) then
-              call mpi_checkpoint_create(comm_setup, 'bt', checkpoint, error)
+              call mpi_checkpoint_create(comm_setup, checkpoint, error)
               if (error .eq. 0) then
                   call mpi_file_write_ordered(checkpoint, step, 1, MPI_INTEGER, MPI_STATUS_IGNORE, error)
                   call mpi_file_write_ordered(checkpoint, u, size(u), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, error)

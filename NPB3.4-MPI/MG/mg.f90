@@ -54,7 +54,6 @@
       use mg_data
       use mg_fields
       use mpinpb
-      use mpi_checkpoint
 
       implicit none
 
@@ -294,7 +293,7 @@
 
       do  it=it_min,nit
          if (it.eq.1 .or. it.eq.nit .or. mod(it,nit/5).eq.0) then
-             call mpi_checkpoint_create(comm_work, 'mg', checkpoint, ierr)
+             call mpi_checkpoint_create(comm_work, checkpoint, ierr)
              if (ierr .eq. 0) then
                  call mpi_file_write_ordered(checkpoint, it, 1, MPI_INTEGER, MPI_STATUS_IGNORE, ierr)
                  call mpi_file_write_ordered(checkpoint, u, size(u), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)

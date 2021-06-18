@@ -84,7 +84,6 @@
       use ft_data
       use ft_fields
       use mpinpb
-      use mpi_checkpoint
 
       implicit none
 
@@ -161,7 +160,7 @@
       do iter = iter_min, niter
 
          if (mod(iter, niter/5) .eq. 0 .or. iter .eq. niter .or. iter .eq. 1) then
-             call mpi_checkpoint_create(comm_solve, 'ft', checkpoint, ierr)
+             call mpi_checkpoint_create(comm_solve, checkpoint, ierr)
              if (ierr .eq. 0) then
                  call mpi_file_write_ordered(checkpoint, iter, 1, MPI_INTEGER, MPI_STATUS_IGNORE, ierr)
                  call mpi_file_write_ordered(checkpoint, sums, size(sums), MPI_DOUBLE_COMPLEX, MPI_STATUS_IGNORE, ierr)

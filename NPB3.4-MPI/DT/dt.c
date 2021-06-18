@@ -660,7 +660,7 @@ int ProcessNodes(DGraph *dg,int me){
     verified=verify(dg->name,chksum);
   }
   MPI_File checkpoint = MPI_FILE_NULL;
-  int ret = MPI_Checkpoint_create(MPI_COMM_WORLD, "dt", &checkpoint);
+  int ret = MPI_Checkpoint_create(MPI_COMM_WORLD, &checkpoint);
   if (ret == MPI_SUCCESS) {
     if (me == 0) {
       MPI_File_write(checkpoint, &chksum, 1, MPI_DOUBLE, MPI_STATUS_IGNORE);

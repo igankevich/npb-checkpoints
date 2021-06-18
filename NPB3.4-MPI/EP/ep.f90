@@ -52,7 +52,6 @@
 
       use ep_data
       use mpinpb
-      use mpi_checkpoint
 
       implicit none
 
@@ -280,7 +279,7 @@
      &                   MPI_MAX, comm_solve, ierr)
       tm = x(1)
 
-      call mpi_checkpoint_create(comm_solve, 'ep', checkpoint, ierr)
+      call mpi_checkpoint_create(comm_solve, checkpoint, ierr)
       if (ierr .eq. 0) then
           if (node.eq.root) then
               call mpi_file_write(checkpoint, sx, 1, dp_type, MPI_STATUS_IGNORE, ierr)

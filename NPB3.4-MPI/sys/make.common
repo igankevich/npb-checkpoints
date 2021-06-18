@@ -41,11 +41,11 @@ ${COMMON}/timers.o: ${COMMON}/timers.f90
 ${COMMON}/c_timers.o: ${COMMON}/c_timers.c
 	cd ${COMMON}; ${CCOMPILE} c_timers.c
 
-${COMMON}/mpi_checkpoint.o: ${COMMON}/mpi_checkpoint.f90
-	cd ${COMMON}; ${FCOMPILE} mpi_checkpoint.f90
+#${COMMON}/mpi_checkpoint.o: ${COMMON}/mpi_checkpoint.f90
+#	cd ${COMMON}; ${FCOMPILE} mpi_checkpoint.f90
 
-${COMMON}/mpi_checkpoint_c.o: ${COMMON}/mpi_checkpoint.c ${COMMON}/mpi_checkpoint.h
-	cd ${COMMON}; ${CCOMPILE} mpi_checkpoint.c -o mpi_checkpoint_c.o
+${COMMON}/mpi_checkpoint.o: ${COMMON}/mpi_checkpoint.c ${COMMON}/mpi_checkpoint.h
+	cd ${COMMON}; ${CCOMPILE} mpi_checkpoint.c -o mpi_checkpoint.o
 
 # Normally setparams updates npbparams.h only if the settings (CLASS)
 # have changed. However, we also want to update if the compile options
