@@ -95,7 +95,7 @@
 !---------------------------------------------------------------------
       do istep = istep_min, niter
 
-         if (mod(istep, niter/5) .eq. 0 .or. istep .eq. niter .or. istep .eq. 1) then
+         if (mod(istep, max(1,niter/5)) .eq. 0 .or. istep .eq. niter .or. istep .eq. 1) then
              call mpi_checkpoint_create(comm_solve, checkpoint, IERROR)
              if (IERROR .eq. 0) then
                  call mpi_file_write_ordered(checkpoint, istep, 1, MPI_INTEGER, MPI_STATUS_IGNORE, IERROR)

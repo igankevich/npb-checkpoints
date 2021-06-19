@@ -156,6 +156,8 @@
 #define  MAX_ITERATIONS      10
 #define  TEST_ARRAY_SIZE     5
 
+#define MAX(a,b) (((a)>(b))?(a):(b))
+
 
 /* Number of keys assigned to each processor
  * #define  NUM_KEYS            (TOTAL_KEYS/NUM_PROCS*MIN_PROCS)
@@ -575,8 +577,8 @@ void full_verify( void )
         key_array[--key_buff_ptr_global[key_buff2[i]]-
                                  total_lesser_keys] = key_buff2[i];
     last_local_key = (total_local_keys<1)? 0 : (total_local_keys-1);
-    fprintf(stderr, "%d: last_local_key=%d\n", my_rank, last_local_key);
-    fprintf(stderr, "%d: total_local_keys=%d\n", my_rank, total_local_keys);
+    fprintf(stdout, "%d: last_local_key=%d\n", my_rank, last_local_key);
+    fprintf(stdout, "%d: total_local_keys=%d\n", my_rank, total_local_keys);
 
 /*  Send largest key value to next processor  */
     if( my_rank > 0 )
@@ -604,14 +606,14 @@ void full_verify( void )
         if( k > key_array[0] )
             j++;
 
-    fprintf(stderr, "%d: j=%d\n", my_rank, j);
+    fprintf(stdout, "%d: j=%d\n", my_rank, j);
 
 /*  Confirm keys correctly sorted: count incorrectly sorted keys, if any */
     for( i=1; i<total_local_keys; i++ )
         if( key_array[i-1] > key_array[i] )
             j++;
 
-    fprintf(stderr, "%d: jj=%d\n", my_rank, j);
+    fprintf(stdout, "%d: jj=%d\n", my_rank, j);
 
     if( j != 0 )
     {
@@ -1110,14 +1112,16 @@ int main( int argc, char **argv )
     for( iteration=iteration_min; iteration<=MAX_ITERATIONS; iteration++ )
     {
         if( my_rank == 0 && CLASS != 'S' ) printf( "        %d\n", iteration );
-        int ret = MPI_Checkpoint_create(MPI_COMM_WORLD, &checkpoint);
-        if (ret == MPI_SUCCESS) {
-            MPI_File_write_ordered(checkpoint, &iteration, 1, MPI_INT, MPI_STATUS_IGNORE);
-            MPI_File_write_ordered(checkpoint, key_array, size_of_buffers, MP_KEY_TYPE, MPI_STATUS_IGNORE);
-            MPI_File_write_ordered(checkpoint, key_buff1, size_of_buffers, MP_KEY_TYPE, MPI_STATUS_IGNORE);
-            MPI_File_write_ordered(checkpoint, key_buff2, size_of_buffers, MP_KEY_TYPE, MPI_STATUS_IGNORE);
-            MPI_File_write_ordered(checkpoint, &passed_verification, 1, MPI_INT, MPI_STATUS_IGNORE);
-            MPI_Checkpoint_close(&checkpoint);
+        if (iteration%MAX(1,MAX_ITERATIONS/5) == 0 || iteration == 1 || iteration == MAX_ITERATIONS) {
+            int ret = MPI_Checkpoint_create(MPI_COMM_WORLD, &checkpoint);
+            if (ret == MPI_SUCCESS) {
+                MPI_File_write_ordered(checkpoint, &iteration, 1, MPI_INT, MPI_STATUS_IGNORE);
+                MPI_File_write_ordered(checkpoint, key_array, size_of_buffers, MP_KEY_TYPE, MPI_STATUS_IGNORE);
+                MPI_File_write_ordered(checkpoint, key_buff1, size_of_buffers, MP_KEY_TYPE, MPI_STATUS_IGNORE);
+                MPI_File_write_ordered(checkpoint, key_buff2, size_of_buffers, MP_KEY_TYPE, MPI_STATUS_IGNORE);
+                MPI_File_write_ordered(checkpoint, &passed_verification, 1, MPI_INT, MPI_STATUS_IGNORE);
+                MPI_Checkpoint_close(&checkpoint);
+            }
         }
         rank( iteration );
     }
