@@ -1101,11 +1101,11 @@ int main( int argc, char **argv )
     MPI_File checkpoint = MPI_FILE_NULL;
     int ret = MPI_Checkpoint_restore(MPI_COMM_WORLD, &checkpoint);
     if (ret == MPI_SUCCESS) {
-        MPI_File_read_ordered(checkpoint, &iteration_min, 1, MPI_INT, MPI_STATUS_IGNORE);
-        MPI_File_read_ordered(checkpoint, key_array, size_of_buffers, MP_KEY_TYPE, MPI_STATUS_IGNORE);
-        MPI_File_read_ordered(checkpoint, key_buff1, size_of_buffers, MP_KEY_TYPE, MPI_STATUS_IGNORE);
-        MPI_File_read_ordered(checkpoint, key_buff2, size_of_buffers, MP_KEY_TYPE, MPI_STATUS_IGNORE);
-        MPI_File_read_ordered(checkpoint, &passed_verification, 1, MPI_INT, MPI_STATUS_IGNORE);
+        MPI_Checkpoint_read_ordered(checkpoint, &iteration_min, 1, MPI_INT);
+        MPI_Checkpoint_read_ordered(checkpoint, key_array, size_of_buffers, MP_KEY_TYPE);
+        MPI_Checkpoint_read_ordered(checkpoint, key_buff1, size_of_buffers, MP_KEY_TYPE);
+        MPI_Checkpoint_read_ordered(checkpoint, key_buff2, size_of_buffers, MP_KEY_TYPE);
+        MPI_Checkpoint_read_ordered(checkpoint, &passed_verification, 1, MPI_INT);
         MPI_Checkpoint_close(&checkpoint);
     }
 /*  This is the main iteration */
@@ -1115,11 +1115,11 @@ int main( int argc, char **argv )
         if (iteration%MAX(1,MAX_ITERATIONS/5) == 0 || iteration == 1 || iteration == MAX_ITERATIONS) {
             int ret = MPI_Checkpoint_create(MPI_COMM_WORLD, &checkpoint);
             if (ret == MPI_SUCCESS) {
-                MPI_File_write_ordered(checkpoint, &iteration, 1, MPI_INT, MPI_STATUS_IGNORE);
-                MPI_File_write_ordered(checkpoint, key_array, size_of_buffers, MP_KEY_TYPE, MPI_STATUS_IGNORE);
-                MPI_File_write_ordered(checkpoint, key_buff1, size_of_buffers, MP_KEY_TYPE, MPI_STATUS_IGNORE);
-                MPI_File_write_ordered(checkpoint, key_buff2, size_of_buffers, MP_KEY_TYPE, MPI_STATUS_IGNORE);
-                MPI_File_write_ordered(checkpoint, &passed_verification, 1, MPI_INT, MPI_STATUS_IGNORE);
+                MPI_Checkpoint_write_ordered(checkpoint, &iteration, 1, MPI_INT);
+                MPI_Checkpoint_write_ordered(checkpoint, key_array, size_of_buffers, MP_KEY_TYPE);
+                MPI_Checkpoint_write_ordered(checkpoint, key_buff1, size_of_buffers, MP_KEY_TYPE);
+                MPI_Checkpoint_write_ordered(checkpoint, key_buff2, size_of_buffers, MP_KEY_TYPE);
+                MPI_Checkpoint_write_ordered(checkpoint, &passed_verification, 1, MPI_INT);
                 MPI_Checkpoint_close(&checkpoint);
             }
         }

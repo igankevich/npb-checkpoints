@@ -7,6 +7,7 @@ dmtcp_restart_script*.sh
 *.checkpoint
 .timestamp
 build
+*.shfp.*
 
 # Created by https://www.toptal.com/developers/gitignore/api/vim,linux,fortran
 # Edit at https://www.toptal.com/developers/gitignore?templates=vim,linux,fortran
