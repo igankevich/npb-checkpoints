@@ -284,21 +284,21 @@
       it_min = 1
       call mpi_checkpoint_restore(comm_work, checkpoint, ierr)
       if (ierr .eq. 0) then
-          call mpi_file_read_ordered(checkpoint, it_min, 1, MPI_INTEGER, MPI_STATUS_IGNORE, ierr)
-          call mpi_file_read_ordered(checkpoint, u, size(u), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
-          call mpi_file_read_ordered(checkpoint, v, size(v), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
-          call mpi_file_read_ordered(checkpoint, r, size(r), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
+          call mpi_checkpoint_read_ordered(checkpoint, it_min, 1, MPI_INTEGER, ierr)
+          call mpi_checkpoint_read_ordered(checkpoint, u, size(u), MPI_DOUBLE_PRECISION, ierr)
+          call mpi_checkpoint_read_ordered(checkpoint, v, size(v), MPI_DOUBLE_PRECISION, ierr)
+          call mpi_checkpoint_read_ordered(checkpoint, r, size(r), MPI_DOUBLE_PRECISION, ierr)
           call mpi_checkpoint_close(checkpoint, ierr)
       endif
 
       do  it=it_min,nit
-         if (it.eq.1 .or. it.eq.nit .or. mod(it,nit/5).eq.0) then
+         if (it.eq.1 .or. it.eq.nit .or. mod(it,max(1,nit/5)).eq.0) then
              call mpi_checkpoint_create(comm_work, checkpoint, ierr)
              if (ierr .eq. 0) then
-                 call mpi_file_write_ordered(checkpoint, it, 1, MPI_INTEGER, MPI_STATUS_IGNORE, ierr)
-                 call mpi_file_write_ordered(checkpoint, u, size(u), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
-                 call mpi_file_write_ordered(checkpoint, v, size(v), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
-                 call mpi_file_write_ordered(checkpoint, r, size(r), MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
+                 call mpi_checkpoint_write_ordered(checkpoint, it, 1, MPI_INTEGER, ierr)
+                 call mpi_checkpoint_write_ordered(checkpoint, u, size(u), MPI_DOUBLE_PRECISION, ierr)
+                 call mpi_checkpoint_write_ordered(checkpoint, v, size(v), MPI_DOUBLE_PRECISION, ierr)
+                 call mpi_checkpoint_write_ordered(checkpoint, r, size(r), MPI_DOUBLE_PRECISION, ierr)
                  call mpi_checkpoint_close(checkpoint, ierr)
              endif
          endif

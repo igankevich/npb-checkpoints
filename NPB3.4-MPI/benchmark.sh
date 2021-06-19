@@ -47,8 +47,9 @@ benchmark_v2() {
         fi
         export MPI_CHECKPOINT_CONFIG=$(mktemp -p $TMPDIR)
         cat > $MPI_CHECKPOINT_CONFIG << EOF
-checkpoint-prefix = $id
+checkpoint-prefix = $name
 verbose = 1
+compression-level = 0
 EOF
         time --format='%e' --output=$output --append mpiexec -n $nprocs $exe "$@"
         checkpoints=$(find . -name "$id*.checkpoint" | sort)
@@ -82,7 +83,7 @@ export TMPDIR=$HOME/tmp
 cd CG
 for i in $(expr $SLURM_JOB_NUM_NODES \* 16)
 do
-    for j in mpi #no
+    for j in mpi
     do
         #j=mpi
         #benchmark_v2 cg C $i $j
@@ -96,7 +97,8 @@ do
         #benchmark_v2 dt C $i $j TODO
         #benchmark_v2 ep C $i $j
         #benchmark_v2 is C $i $j
-        benchmark_v2 lu C $i $j
+        #benchmark_v2 lu C $i $j
+        benchmark_v2 mg C $i $j
     done
 done
 #benchmark dt 21 WH

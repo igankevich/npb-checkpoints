@@ -147,9 +147,9 @@
 
       call mpi_checkpoint_restore(comm_solve, checkpoint, ierr)
       if (ierr .eq. 0) then
-          call mpi_file_read(checkpoint, sx, 1, dp_type, MPI_STATUS_IGNORE, ierr)
-          call mpi_file_read(checkpoint, sy, 1, dp_type, MPI_STATUS_IGNORE, ierr)
-          call mpi_file_read(checkpoint, gc, 1, dp_type, MPI_STATUS_IGNORE, ierr)
+          call mpi_checkpoint_read(checkpoint, sx, 1, dp_type, ierr)
+          call mpi_checkpoint_read(checkpoint, sy, 1, dp_type, ierr)
+          call mpi_checkpoint_read(checkpoint, gc, 1, dp_type, ierr)
           call mpi_checkpoint_close(checkpoint, ierr)
           goto 1234
       endif
@@ -282,9 +282,9 @@
       call mpi_checkpoint_create(comm_solve, checkpoint, ierr)
       if (ierr .eq. 0) then
           if (node.eq.root) then
-              call mpi_file_write(checkpoint, sx, 1, dp_type, MPI_STATUS_IGNORE, ierr)
-              call mpi_file_write(checkpoint, sy, 1, dp_type, MPI_STATUS_IGNORE, ierr)
-              call mpi_file_write(checkpoint, gc, 1, dp_type, MPI_STATUS_IGNORE, ierr)
+              call mpi_checkpoint_write(checkpoint, sx, 1, dp_type, ierr)
+              call mpi_checkpoint_write(checkpoint, sy, 1, dp_type, ierr)
+              call mpi_checkpoint_write(checkpoint, gc, 1, dp_type, ierr)
           endif
           call mpi_checkpoint_close(checkpoint, ierr)
       endif
