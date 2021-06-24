@@ -43,7 +43,7 @@ ${COMMON}/c_timers.o: ${COMMON}/c_timers.c
 	cd ${COMMON}; ${CCOMPILE} c_timers.c
 
 ${COMMON}/mpi_checkpoint.o: ${COMMON}/mpi_checkpoint.c ${COMMON}/mpi_checkpoint.h ${COMMON}/mpi_checkpoint_weak.c
-	cd ${COMMON}; ${CCOMPILE} mpi_checkpoint.c -o mpi_checkpoint.o
+	cd ${COMMON}; ${CCOMPILE} -D_GNU_SOURCE mpi_checkpoint.c -o mpi_checkpoint.o
 
 ${COMMON}/mpi_checkpoint_weak.o: ${COMMON}/mpi_checkpoint_weak.c
 	cd ${COMMON}; ${CCOMPILE} mpi_checkpoint_weak.c -o mpi_checkpoint_weak.o

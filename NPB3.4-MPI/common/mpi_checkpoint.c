@@ -27,6 +27,7 @@ struct mpi_checkpoint {
     /* the number of bytes that are "freed" (MADV_DONTNEED)*/
     size_t start;
     enum checkpoint_flags flags;
+    MPI_Comm communicator;
 };
 
 static char checkpoint_prefix[4096] = "checkpoint";
@@ -271,6 +272,7 @@ int MPI_Checkpoint_create(MPI_Comm comm, MPI_Checkpoint* file) {
         perror("mmap");
         exit(EXIT_FAILURE);
     }
+    checkpoint->communicator = comm;
     *file = checkpoint;
     if (verbose) {
         fprintf(stderr, "rank %d creating %s\n", rank, newfilename);
@@ -330,11 +332,13 @@ int MPI_Checkpoint_restore(MPI_Comm comm, MPI_Checkpoint* file) {
 }
 
 int MPI_Checkpoint_close(MPI_Checkpoint* checkpoint) {
+    MPI_Comm comm = (*checkpoint)->communicator;
     checkpoint_free(*checkpoint);
+    *checkpoint = MPI_CHECKPOINT_NULL;
     checkpoint_t1 = MPI_Wtime();
     if (verbose) {
         int rank = 0;
-        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        MPI_Comm_rank(comm, &rank);
         fprintf(stderr, "rank %d checkpoint create/restore took %f seconds\n",
                 rank, checkpoint_t1-checkpoint_t0);
         fflush(stderr);
@@ -414,6 +418,15 @@ int MPI_Checkpoint_read(MPI_Checkpoint checkpoint, void *buf, int count, MPI_Dat
     }
     memcpy(buf, ((char*)checkpoint->data) + checkpoint->offset, size_in_bytes);
     checkpoint->offset += size_in_bytes;
+    size_t num_pages = (checkpoint->offset-checkpoint->start) / page_size;
+    if (num_pages != 0) {
+        if (madvise(((char*)checkpoint->data) + checkpoint->start,
+                    checkpoint->offset-checkpoint->start, MADV_DONTNEED) == -1) {
+            perror("madvise");
+            exit(EXIT_FAILURE);
+        }
+        checkpoint->start += num_pages*page_size;
+    }
     return MPI_SUCCESS;
 }
 
