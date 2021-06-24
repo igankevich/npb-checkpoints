@@ -29,6 +29,7 @@
 !    initialize MPI communication
 !---------------------------------------------------------------------
       call MPI_INIT( IERROR )
+      call MPI_CHECKPOINT_INIT( IERROR )
 
 !---------------------------------------------------------------------
 !     get a process grid that requires a (nx*ny) number of procs.

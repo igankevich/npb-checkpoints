@@ -204,6 +204,7 @@
 
  999  continue
       call mpi_finalize(ierr)
+      call mpi_checkpoint_finalize(ierr)
       end
 
 

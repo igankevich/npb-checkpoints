@@ -50,6 +50,8 @@
 
        implicit none
 
+       include 'mpi_checkpointf.h'
+
        integer i, niter, step, c, error, fstatus
        double precision navg, mflops, mbytes, n3
 
@@ -68,6 +70,7 @@
      &             'bpack', 'exch', 'xcomm', 'ycomm', 'zcomm',  &
      &             ' totcomp', ' totcomm'/
 
+       checkpoint = MPI_CHECKPOINT_NULL
        call setup_mpi
        if (.not. active) goto 999
 
@@ -214,20 +217,20 @@
        step_min = 1
        call mpi_checkpoint_restore(comm_setup, checkpoint, error)
        if (error .eq. 0) then
-           call mpi_checkpoint_read_ordered(checkpoint, step_min, 1, MPI_INTEGER, error)
-           call mpi_checkpoint_read_ordered(checkpoint, u, size(u), MPI_DOUBLE_PRECISION, error)
-           call mpi_checkpoint_read_ordered(checkpoint, rhs, size(rhs), MPI_DOUBLE_PRECISION, error)
+           call mpi_checkpoint_read(checkpoint, step_min, 1, MPI_INTEGER, error)
+           call mpi_checkpoint_read(checkpoint, u, size(u), MPI_DOUBLE_PRECISION, error)
+           call mpi_checkpoint_read(checkpoint, rhs, size(rhs), MPI_DOUBLE_PRECISION, error)
            call mpi_checkpoint_close(checkpoint, error)
        endif
 
        do  step = step_min, niter
 
-          if (mod(step, max(1,niter/5)) .eq. 0 .or. step .eq. niter .or. step .eq. 1) then
+          if (step .eq. niter/2 .and. step_min .eq. 1) then
               call mpi_checkpoint_create(comm_setup, checkpoint, error)
               if (error .eq. 0) then
-                  call mpi_checkpoint_write_ordered(checkpoint, step, 1, MPI_INTEGER, error)
-                  call mpi_checkpoint_write_ordered(checkpoint, u, size(u), MPI_DOUBLE_PRECISION, error)
-                  call mpi_checkpoint_write_ordered(checkpoint, rhs, size(rhs), MPI_DOUBLE_PRECISION, error)
+                  call mpi_checkpoint_write(checkpoint, step, 1, MPI_INTEGER, error)
+                  call mpi_checkpoint_write(checkpoint, u, size(u), MPI_DOUBLE_PRECISION, error)
+                  call mpi_checkpoint_write(checkpoint, rhs, size(rhs), MPI_DOUBLE_PRECISION, error)
                   call mpi_checkpoint_close(checkpoint, error)
               endif
           endif
@@ -345,6 +348,7 @@
  999   continue
        call mpi_barrier(MPI_COMM_WORLD, error)
        call mpi_finalize(error)
+       call mpi_checkpoint_finalize(error)
 
        end
 

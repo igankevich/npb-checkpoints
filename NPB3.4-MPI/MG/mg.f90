@@ -57,6 +57,8 @@
 
       implicit none
 
+      include 'mpi_checkpointf.h'
+
 !---------------------------------------------------------------------------c
 ! k is the current level. It is passed down through subroutine args
 ! and is NOT global. it is the current iteration
@@ -84,7 +86,9 @@
      &            ' totcomp', ' totcomm'/
 
 
+      checkpoint = MPI_CHECKPOINT_NULL
       call mpi_init(ierr)
+      call mpi_checkpoint_init(ierr)
 
 !---------------------------------------------------------------------
 ! get a process grid that requires a pwr-2 number of procs.
@@ -284,21 +288,21 @@
       it_min = 1
       call mpi_checkpoint_restore(comm_work, checkpoint, ierr)
       if (ierr .eq. 0) then
-          call mpi_checkpoint_read_ordered(checkpoint, it_min, 1, MPI_INTEGER, ierr)
-          call mpi_checkpoint_read_ordered(checkpoint, u, size(u), MPI_DOUBLE_PRECISION, ierr)
-          call mpi_checkpoint_read_ordered(checkpoint, v, size(v), MPI_DOUBLE_PRECISION, ierr)
-          call mpi_checkpoint_read_ordered(checkpoint, r, size(r), MPI_DOUBLE_PRECISION, ierr)
+          call mpi_checkpoint_read(checkpoint, it_min, 1, MPI_INTEGER, ierr)
+          call mpi_checkpoint_read(checkpoint, u, size(u), MPI_DOUBLE_PRECISION, ierr)
+          call mpi_checkpoint_read(checkpoint, v, size(v), MPI_DOUBLE_PRECISION, ierr)
+          call mpi_checkpoint_read(checkpoint, r, size(r), MPI_DOUBLE_PRECISION, ierr)
           call mpi_checkpoint_close(checkpoint, ierr)
       endif
 
       do  it=it_min,nit
-         if (it.eq.1 .or. it.eq.nit .or. mod(it,max(1,nit/5)).eq.0) then
+         if (it .eq. nit/2 .and. it_min .eq. 1) then
              call mpi_checkpoint_create(comm_work, checkpoint, ierr)
              if (ierr .eq. 0) then
-                 call mpi_checkpoint_write_ordered(checkpoint, it, 1, MPI_INTEGER, ierr)
-                 call mpi_checkpoint_write_ordered(checkpoint, u, size(u), MPI_DOUBLE_PRECISION, ierr)
-                 call mpi_checkpoint_write_ordered(checkpoint, v, size(v), MPI_DOUBLE_PRECISION, ierr)
-                 call mpi_checkpoint_write_ordered(checkpoint, r, size(r), MPI_DOUBLE_PRECISION, ierr)
+                 call mpi_checkpoint_write(checkpoint, it, 1, MPI_INTEGER, ierr)
+                 call mpi_checkpoint_write(checkpoint, u, size(u), MPI_DOUBLE_PRECISION, ierr)
+                 call mpi_checkpoint_write(checkpoint, v, size(v), MPI_DOUBLE_PRECISION, ierr)
+                 call mpi_checkpoint_write(checkpoint, r, size(r), MPI_DOUBLE_PRECISION, ierr)
                  call mpi_checkpoint_close(checkpoint, ierr)
              endif
          endif
@@ -418,6 +422,7 @@
 
  999  continue
       call mpi_finalize(ierr)
+      call mpi_checkpoint_finalize(ierr)
       end
 
 !---------------------------------------------------------------------

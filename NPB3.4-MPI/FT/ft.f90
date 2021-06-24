@@ -147,27 +147,26 @@
       iter_min = 1
       call mpi_checkpoint_restore(comm_solve, checkpoint, ierr)
       if (ierr .eq. 0) then
-          call mpi_checkpoint_read_ordered(checkpoint, iter_min, 1, MPI_INTEGER, ierr)
-          call mpi_checkpoint_read_ordered(checkpoint, sums, size(sums), MPI_DOUBLE_COMPLEX, ierr)
-          call mpi_checkpoint_read_ordered(checkpoint, u, size(u), MPI_DOUBLE_COMPLEX, ierr)
-          call mpi_checkpoint_read_ordered(checkpoint, u0, size(u0), MPI_DOUBLE_COMPLEX, ierr)
-          call mpi_checkpoint_read_ordered(checkpoint, u1, size(u1), MPI_DOUBLE_COMPLEX, ierr)
-          call mpi_checkpoint_read_ordered(checkpoint, u2, size(u2), MPI_DOUBLE_COMPLEX, ierr)
+          call mpi_checkpoint_read(checkpoint, iter_min, 1, MPI_INTEGER, ierr)
+          call mpi_checkpoint_read(checkpoint, sums, size(sums), MPI_DOUBLE_COMPLEX, ierr)
+          call mpi_checkpoint_read(checkpoint, u, size(u), MPI_DOUBLE_COMPLEX, ierr)
+          call mpi_checkpoint_read(checkpoint, u0, size(u0), MPI_DOUBLE_COMPLEX, ierr)
+          call mpi_checkpoint_read(checkpoint, u1, size(u1), MPI_DOUBLE_COMPLEX, ierr)
+          call mpi_checkpoint_read(checkpoint, u2, size(u2), MPI_DOUBLE_COMPLEX, ierr)
           call mpi_checkpoint_close(checkpoint, ierr)
-          write (*,*) 'restored from the checkpoint rank ', me, iter_min
       endif
 
       do iter = iter_min, niter
 
-         if (mod(iter, niter/5) .eq. 0 .or. iter .eq. niter .or. iter .eq. 1) then
+         if (iter .eq. iter/2 .and. iter_min .eq. 1) then
              call mpi_checkpoint_create(comm_solve, checkpoint, ierr)
              if (ierr .eq. 0) then
-                 call mpi_checkpoint_write_ordered(checkpoint, iter, 1, MPI_INTEGER, ierr)
-                 call mpi_checkpoint_write_ordered(checkpoint, sums, size(sums), MPI_DOUBLE_COMPLEX, ierr)
-                 call mpi_checkpoint_write_ordered(checkpoint, u, size(u), MPI_DOUBLE_COMPLEX, ierr)
-                 call mpi_checkpoint_write_ordered(checkpoint, u0, size(u0), MPI_DOUBLE_COMPLEX, ierr)
-                 call mpi_checkpoint_write_ordered(checkpoint, u1, size(u1), MPI_DOUBLE_COMPLEX, ierr)
-                 call mpi_checkpoint_write_ordered(checkpoint, u2, size(u2), MPI_DOUBLE_COMPLEX, ierr)
+                 call mpi_checkpoint_write(checkpoint, iter, 1, MPI_INTEGER, ierr)
+                 call mpi_checkpoint_write(checkpoint, sums, size(sums), MPI_DOUBLE_COMPLEX, ierr)
+                 call mpi_checkpoint_write(checkpoint, u, size(u), MPI_DOUBLE_COMPLEX, ierr)
+                 call mpi_checkpoint_write(checkpoint, u0, size(u0), MPI_DOUBLE_COMPLEX, ierr)
+                 call mpi_checkpoint_write(checkpoint, u1, size(u1), MPI_DOUBLE_COMPLEX, ierr)
+                 call mpi_checkpoint_write(checkpoint, u2, size(u2), MPI_DOUBLE_COMPLEX, ierr)
                  call mpi_checkpoint_close(checkpoint, ierr)
              endif
          endif
@@ -207,6 +206,7 @@
 
   999 continue
       call MPI_Finalize(ierr)
+      call MPI_Checkpoint_finalize(ierr)
       end
 
 !---------------------------------------------------------------------
@@ -374,6 +374,7 @@
       debug = .FALSE.
       
       call MPI_Init(ierr)
+      call MPI_Checkpoint_init(ierr)
 
 !---------------------------------------------------------------------
 !     get a process grid that requires a pwr-2 number of procs.

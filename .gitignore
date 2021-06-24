@@ -1,5 +1,7 @@
 /NPB3.4-MPI/bin/*
 /NPB3.4-MPI/sys/setparams
+/NPB3.4-MPI/common/mpi_checkpoint_gen
+/NPB3.4-MPI/common/mpi_checkpoint_weak.c
 npbparams.h
 checkpoint.dat
 *.dmtcp

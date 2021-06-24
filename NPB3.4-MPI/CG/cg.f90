@@ -57,6 +57,7 @@
       use timing
 
       implicit none
+      include 'mpi_checkpointf.h'
 
       integer status(MPI_STATUS_SIZE), request, ierr
       integer checkpoint, it_min, state
@@ -81,7 +82,7 @@
 
       data t_recs/'total', 'conjg', 'rcomm', 'ncomm',  &
      &            ' totcomp', ' totcomm'/
-      checkpoint = MPI_FILE_NULL
+      checkpoint = MPI_CHECKPOINT_NULL
 
 
 !---------------------------------------------------------------------
@@ -311,8 +312,8 @@
       it_min = 1
       call mpi_checkpoint_restore(comm_solve, checkpoint, ierr)
       if (ierr .eq. 0) then
-          call mpi_checkpoint_read_ordered(checkpoint, it_min, 1, MPI_INTEGER, ierr)
-          call mpi_checkpoint_read_ordered(checkpoint, x, size(x), MPI_DOUBLE_PRECISION, ierr)
+          call mpi_checkpoint_read(checkpoint, it_min, 1, MPI_INTEGER, ierr)
+          call mpi_checkpoint_read(checkpoint, x, size(x), MPI_DOUBLE_PRECISION, ierr)
           call mpi_checkpoint_close(checkpoint, ierr)
       endif
 
@@ -323,11 +324,11 @@
 !---------------------------------------------------------------------
       do it = it_min, niter
 
-         if (mod(it, max(1,niter/5)) .eq. 0 .or. it .eq. niter .or. it .eq. 1) then
+         if (it .eq. niter/2 .and. it_min == 1) then
              call mpi_checkpoint_create(comm_solve, checkpoint, ierr)
              if (ierr .eq. 0) then
-                 call mpi_checkpoint_write_ordered(checkpoint, it, 1, MPI_INTEGER, ierr)
-                 call mpi_checkpoint_write_ordered(checkpoint, x, size(x), MPI_DOUBLE_PRECISION, ierr)
+                 call mpi_checkpoint_write(checkpoint, it, 1, MPI_INTEGER, ierr)
+                 call mpi_checkpoint_write(checkpoint, x, size(x), MPI_DOUBLE_PRECISION, ierr)
                  call mpi_checkpoint_close(checkpoint, ierr)
              endif
          endif
@@ -495,6 +496,7 @@
 
  999  continue
       call mpi_finalize(ierr)
+      call mpi_checkpoint_finalize(ierr)
 
 
 
@@ -520,6 +522,7 @@
 
 
       call mpi_init( ierr )
+      call mpi_checkpoint_init( ierr )
 
 !---------------------------------------------------------------------
 !     get a process grid that requires a pwr-2 number of procs.

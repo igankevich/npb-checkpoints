@@ -951,6 +951,7 @@ int main( int argc, char **argv )
     MPI_Init( &argc, &argv );
     MPI_Comm_rank( MPI_COMM_WORLD, &my_rank );
     MPI_Comm_size( MPI_COMM_WORLD, &np_total );
+    MPI_Checkpoint_init();
 
 
 /*  Check to see whether total number of processes is within bounds.
@@ -962,6 +963,7 @@ int main( int argc, char **argv )
            printf( "\n ERROR: number of processes %d not within range %d-%d"
                    "\n Exiting program!\n\n", np_total, MIN_PROCS, MAX_PROCS);
        MPI_Finalize();
+       MPI_Checkpoint_finalize();
        exit( 1 );
     }
 
@@ -1006,6 +1008,7 @@ int main( int argc, char **argv )
 
     if (!active) {
         MPI_Finalize();
+        MPI_Checkpoint_finalize();
         exit( 0 );
     }
 
@@ -1098,28 +1101,28 @@ int main( int argc, char **argv )
     timer_start( 0 );
 
 
-    MPI_File checkpoint = MPI_FILE_NULL;
+    MPI_Checkpoint checkpoint = MPI_CHECKPOINT_NULL;
     int ret = MPI_Checkpoint_restore(MPI_COMM_WORLD, &checkpoint);
     if (ret == MPI_SUCCESS) {
-        MPI_Checkpoint_read_ordered(checkpoint, &iteration_min, 1, MPI_INT);
-        MPI_Checkpoint_read_ordered(checkpoint, key_array, size_of_buffers, MP_KEY_TYPE);
-        MPI_Checkpoint_read_ordered(checkpoint, key_buff1, size_of_buffers, MP_KEY_TYPE);
-        MPI_Checkpoint_read_ordered(checkpoint, key_buff2, size_of_buffers, MP_KEY_TYPE);
-        MPI_Checkpoint_read_ordered(checkpoint, &passed_verification, 1, MPI_INT);
+        MPI_Checkpoint_read(checkpoint, &iteration_min, 1, MPI_INT);
+        MPI_Checkpoint_read(checkpoint, key_array, size_of_buffers, MP_KEY_TYPE);
+        MPI_Checkpoint_read(checkpoint, key_buff1, size_of_buffers, MP_KEY_TYPE);
+        MPI_Checkpoint_read(checkpoint, key_buff2, size_of_buffers, MP_KEY_TYPE);
+        MPI_Checkpoint_read(checkpoint, &passed_verification, 1, MPI_INT);
         MPI_Checkpoint_close(&checkpoint);
     }
 /*  This is the main iteration */
     for( iteration=iteration_min; iteration<=MAX_ITERATIONS; iteration++ )
     {
         if( my_rank == 0 && CLASS != 'S' ) printf( "        %d\n", iteration );
-        if (iteration%MAX(1,MAX_ITERATIONS/5) == 0 || iteration == 1 || iteration == MAX_ITERATIONS) {
+        if (iteration == MAX_ITERATIONS/2 && iteration_min == 1) {
             int ret = MPI_Checkpoint_create(MPI_COMM_WORLD, &checkpoint);
             if (ret == MPI_SUCCESS) {
-                MPI_Checkpoint_write_ordered(checkpoint, &iteration, 1, MPI_INT);
-                MPI_Checkpoint_write_ordered(checkpoint, key_array, size_of_buffers, MP_KEY_TYPE);
-                MPI_Checkpoint_write_ordered(checkpoint, key_buff1, size_of_buffers, MP_KEY_TYPE);
-                MPI_Checkpoint_write_ordered(checkpoint, key_buff2, size_of_buffers, MP_KEY_TYPE);
-                MPI_Checkpoint_write_ordered(checkpoint, &passed_verification, 1, MPI_INT);
+                MPI_Checkpoint_write(checkpoint, &iteration, 1, MPI_INT);
+                MPI_Checkpoint_write(checkpoint, key_array, size_of_buffers, MP_KEY_TYPE);
+                MPI_Checkpoint_write(checkpoint, key_buff1, size_of_buffers, MP_KEY_TYPE);
+                MPI_Checkpoint_write(checkpoint, key_buff2, size_of_buffers, MP_KEY_TYPE);
+                MPI_Checkpoint_write(checkpoint, &passed_verification, 1, MPI_INT);
                 MPI_Checkpoint_close(&checkpoint);
             }
         }
@@ -1239,6 +1242,7 @@ int main( int argc, char **argv )
 #endif
 
     MPI_Finalize();
+    MPI_Checkpoint_finalize();
 
 
     return 0;

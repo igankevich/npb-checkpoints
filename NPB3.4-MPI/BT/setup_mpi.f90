@@ -19,6 +19,7 @@
       integer error, nc
 
       call mpi_init(error)
+      call mpi_checkpoint_init(error)
 
       if (.not. convertdouble) then
          dp_type = MPI_DOUBLE_PRECISION

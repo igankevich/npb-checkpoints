@@ -659,11 +659,11 @@ int ProcessNodes(DGraph *dg,int me){
     }
     verified=verify(dg->name,chksum);
   }
-  MPI_File checkpoint = MPI_FILE_NULL;
+  MPI_Checkpoint checkpoint = MPI_CHECKPOINT_NULL;
   int ret = MPI_Checkpoint_create(MPI_COMM_WORLD, &checkpoint);
   if (ret == MPI_SUCCESS) {
     if (me == 0) {
-      MPI_File_write(checkpoint, &chksum, 1, MPI_DOUBLE, MPI_STATUS_IGNORE);
+      MPI_Checkpoint_write(checkpoint, &chksum, 1, MPI_DOUBLE);
     }
     MPI_Checkpoint_close(&checkpoint);
   }
@@ -678,6 +678,7 @@ int main(int argc,char **argv ){
   double bytes_sent=2.0,tot_time=0.0;
 
     MPI_Init( &argc, &argv );
+    MPI_Checkpoint_init();
     MPI_Comm_rank( MPI_COMM_WORLD, &my_rank );
     MPI_Comm_size( MPI_COMM_WORLD, &comm_size );
 
@@ -696,6 +697,7 @@ int main(int argc,char **argv ){
         fprintf(stderr,"     the number of nodes in the graph\n");
       }
       MPI_Finalize();
+      MPI_Checkpoint_finalize();
       exit(1);
     }
    if(strncmp(argv[1],"BH",2)==0){
@@ -730,11 +732,11 @@ int main(int argc,char **argv ){
       timer_clear(0);
       timer_start(0);
     }
-    MPI_File checkpoint = MPI_FILE_NULL;
+    MPI_Checkpoint checkpoint = MPI_CHECKPOINT_NULL;
     int ret = MPI_Checkpoint_restore(MPI_COMM_WORLD, &checkpoint);
     if (ret == MPI_SUCCESS) {
         double chksum = 0;
-        MPI_File_read(checkpoint, &chksum, 1, MPI_DOUBLE, MPI_STATUS_IGNORE);
+        MPI_Checkpoint_read(checkpoint, &chksum, 1, MPI_DOUBLE);
         MPI_Checkpoint_close(&checkpoint);
         verified = verify(dg->name, chksum);
     } else {
