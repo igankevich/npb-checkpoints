@@ -2,15 +2,12 @@
 
 set -e
 
-benchmark() {
-    name=$1
-    shift
-    nprocs=$1
-    shift
-    make -C .. $name NPROCS=$nprocs CLASS=A
-    rm -f checkpoint.dat
-    mpirun --oversubscribe -np $nprocs ../bin/$name.A.x "$@" 2>&1 | tee /tmp/orig.log
-    mpirun --oversubscribe -np $nprocs ../bin/$name.A.x "$@" 2>&1 | tee /tmp/new.log
+profile() {
+    time --format='%e' --append --output $output "$@"
+}
+
+profile2() {
+    time --format='%e' --append --output ${output}2 "$@"
 }
 
 benchmark_v2() {
@@ -25,18 +22,46 @@ benchmark_v2() {
     make -C .. clean
     make ../common/mpi_checkpoint.o
     make -C .. $name NPROCS=$nprocs CLASS=$class
-    export MPI_CHECKPOINT=$checkpoint 
     exe=../bin/$name.$class.x
+    unset MPI_CHECKPOINT
     if test "$checkpoint" = "dmtcp"
     then
-        rm -f --one-file-system dmtcp*sh *.dmtcp
+        export MPI_CHECKPOINT="dmtcp"
+        rm -rf --one-file-system dmtcp*sh *.dmtcp
+        output=$(mktemp)
+        id=$(cat /proc/sys/kernel/random/uuid)
+        timestamp_start=$(rm -f .timestamp; touch .timestamp; stat --format='%.Y' .timestamp)
+        echo "id,name,class,nprocs,timestamp,size,t" >> $output
+        echo -n "$id,$name,$class,$nprocs,$timestamp_start,," >> $output
         pkill -9 -f dmtcp || true
         dmtcp_coordinator --exit-on-last --daemon
-        dmtcp_launch --join-coordinator --coord-host surge mpirun -np $nprocs $exe "$@"
-        ./dmtcp_restart_script.sh
+        set +e
+        profile dmtcp_launch --no-gzip --join-coordinator --coord-host $(hostname) mpiexec -n $nprocs -f ../hosts $exe "$@"
+        if test $? != 0
+        then
+            return
+        fi
+        set -e
+        echo RESTORE
+        pkill -f dmtcp || true
+        sleep 1
+        dmtcp_coordinator --exit-on-last --daemon
+        cat $output >> ${output}2
+        echo -n "$id,$name,$class,$nprocs,$(stat --format='%.Y' *.dmtcp | awk 'BEGIN{t=0}{if ($1>0+t) t=$1} END {print t}'),$(stat --format='%s' *.dmtcp | awk '{s+=$1} END {print s}')," >> ${output}2
+        sed -i -e 's/ibrun_path=.*/ibrun_path=garbage/' dmtcp_restart_script.sh
+        sed -i -e 's:/usr/bin/::g' dmtcp_restart_script.sh
+        set +e
+        profile2 sh -c './dmtcp_restart_script.sh || true'
+        set -e
+        cat ${output}2 > $output
+        rm ${output}2
+        column -t -s, $output
+        output_dir=../output/$checkpoint-checkpoints
+        mkdir -p $output_dir
+        mv -vn $output $output_dir/$timestamp_start.$name.$class.$nprocs.csv
     else
-        rm -f checkpoint.dat *.checkpoint
-        output=$(mktemp -p $TMPDIR)
+        rm -rf --one-file-system checkpoint.dat *.checkpoint
+        output=$(mktemp)
         id=$(cat /proc/sys/kernel/random/uuid)
         timestamp_start=$(rm -f .timestamp; touch .timestamp; stat --format='%.Y' .timestamp)
         echo "id,name,class,nprocs,timestamp,size,t" >> $output
@@ -45,19 +70,24 @@ benchmark_v2() {
         then
             export MPI_NO_CHECKPOINT=1
         fi
-        export MPI_CHECKPOINT_CONFIG=$(mktemp -p $TMPDIR)
+        export MPI_CHECKPOINT_CONFIG=config.tmp
         cat > $MPI_CHECKPOINT_CONFIG << EOF
-checkpoint-prefix = $name
+checkpoint-interval = 0
 verbose = 1
-compression-level = 0
 EOF
-        time --format='%e' --output=$output --append mpiexec -n $nprocs $exe "$@"
-        checkpoints=$(find . -name "$id*.checkpoint" | sort)
-        for i in $checkpoints
+        set +e
+        profile mpiexec -n $nprocs -f ../hosts $exe "$@"
+        if test $? != 0
+        then
+            return
+        fi
+        set -e
+        checkpoints=$(find . -name "$name*.checkpoint" | sort)
+        for ii in $checkpoints
         do
-            echo -n "$id,$name,$class,$nprocs,$(stat --format='%.Y' $i),$(stat --format='%s' $i)," >> $output
-            export MPI_CHECKPOINT=$i
-            time --format='%e' --output=$output --append mpiexec -n $nprocs $exe "$@"
+            echo -n "$id,$name,$class,$nprocs,$(stat --format='%.Y' $ii),$(stat --format='%s' $ii/* | awk '{s+=$1} END {print s}')," >> $output
+            export MPI_CHECKPOINT=$ii
+            profile mpiexec -n $nprocs -f ../hosts $exe "$@"
         done
         column -t -s, $output
         output_dir=../output/$checkpoint-checkpoints
@@ -67,45 +97,38 @@ EOF
 }
 
 manifest=$(realpath ../manifest.scm)
-eval $(guix environment --manifest=$manifest --search-paths)
 nodes=$(scontrol show hostnames "$SLURM_JOB_NODELIST")
 for i in $nodes
 do
     ssh $i "guix environment --manifest=$manifest --search-paths" &
 done
 wait
+eval $(guix environment --manifest=$manifest --search-paths)
+
 #cd ~/mpi-hello-world
 #env | grep SLURM | sort
 #mpicc hello.c -o hello-mpich
-#mpirun $PWD/hello-mpich
+#mpiexec $PWD/hello-mpich
 
-export TMPDIR=$HOME/tmp
+export HYDRA_IFACE=enp6s0
+export HYDRA_RMK=user
+export UCX_NET_DEVICES=enp6s0
+
 cd CG
 for i in $(expr $SLURM_JOB_NUM_NODES \* 16)
 do
-    for j in mpi
+    for j in dmtcp
     do
-        #j=mpi
-        #benchmark_v2 cg C $i $j
-        #benchmark_v2 ep C $i $j
+        #for k in cg ep ft is lu mg
+        for k in cg
+        do
+            benchmark_v2 $k C $i $j
+        done
+        #benchmark_v2 dt C $i $j BH
         # square number of processes
-#        i=$(echo "import math
-#print(math.floor(math.sqrt($i))**2)" | python3)
-#        echo "new nprocs = $i"
+        i=$(echo "import math
+print(math.floor(math.sqrt($i))**2)" | python3)
+        echo "new nprocs = $i"
         #benchmark_v2 bt C $i $j
-        #benchmark_v2 ft C $i $j
-        #benchmark_v2 dt C $i $j TODO
-        #benchmark_v2 ep C $i $j
-        #benchmark_v2 is C $i $j
-        #benchmark_v2 lu C $i $j
-        benchmark_v2 mg C $i $j
     done
 done
-#benchmark dt 21 WH
-#benchmark ft 2
-#benchmark is 2
-#benchmark lu 2
-#benchmark mg 2
-#benchmark ep 2
-#benchmark bt 4
-#benchmark_v2 cg 2 dmtcp

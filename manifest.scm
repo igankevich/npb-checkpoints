@@ -10,4 +10,5 @@
     (@ (gnu packages compression) gzip) ;; for dmtcp
     (list (@ (gnu packages dns) isc-bind) "utils") ;; for dmtcp
     (@ (gnu packages time) time) ;; benchmarks
+    (@ (gnu packages python) python-3) ;; benchmarks
     ))

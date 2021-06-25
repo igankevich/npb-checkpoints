@@ -55,6 +55,8 @@
 
       implicit none
 
+      include 'mpi_checkpointf.h'
+
       double precision Mops, t1, t2, t3, t4, x1,  &
      &                 x2, sx, sy, tm, an, tt, gc, dum(3)
 
@@ -84,10 +86,12 @@
      &            ' totcomp', ' totcomm'/
 
 
+      checkpoint = MPI_CHECKPOINT_NULL
       call mpi_init(ierr)
       comm_solve = MPI_COMM_WORLD
       call mpi_comm_rank(comm_solve,node,ierr)
       call mpi_comm_size(comm_solve,no_nodes,ierr)
+      call mpi_checkpoint_init(ierr)
 
       root = 0
 
@@ -281,11 +285,9 @@
 
       call mpi_checkpoint_create(comm_solve, checkpoint, ierr)
       if (ierr .eq. 0) then
-          if (node.eq.root) then
-              call mpi_checkpoint_write(checkpoint, sx, 1, dp_type, ierr)
-              call mpi_checkpoint_write(checkpoint, sy, 1, dp_type, ierr)
-              call mpi_checkpoint_write(checkpoint, gc, 1, dp_type, ierr)
-          endif
+          call mpi_checkpoint_write(checkpoint, sx, 1, dp_type, ierr)
+          call mpi_checkpoint_write(checkpoint, sy, 1, dp_type, ierr)
+          call mpi_checkpoint_write(checkpoint, gc, 1, dp_type, ierr)
           call mpi_checkpoint_close(checkpoint, ierr)
       endif
 
@@ -337,5 +339,6 @@
 
  999  continue
       call mpi_finalize(ierr)
+      call mpi_checkpoint_finalize(ierr)
 
       end

@@ -257,7 +257,7 @@ int MPI_Checkpoint_create(MPI_Comm comm, MPI_Checkpoint* file) {
     MPI_Checkpoint checkpoint = checkpoint_alloc();
     checkpoint->fd = open(newfilename, O_CREAT|O_RDWR|O_CLOEXEC, 0644);
     if (checkpoint->fd == -1) {
-        fprintf(stderr, "Unable to open checkpoint \"%s\": %s\n",
+        fprintf(stderr, "Unable to open checkpoint \"%s\" for writing: %s\n",
                 newfilename, strerror(errno));
         exit(EXIT_FAILURE);
     }
@@ -301,7 +301,7 @@ int MPI_Checkpoint_restore(MPI_Comm comm, MPI_Checkpoint* file) {
     }
     int checkpoint_fd = open(newfilename, O_RDONLY|O_CLOEXEC);
     if (checkpoint_fd == -1) {
-        fprintf(stderr, "Unable to open checkpoint \"%s\": %s\n",
+        fprintf(stderr, "Unable to open checkpoint \"%s\" for reading: %s\n",
                 newfilename, strerror(errno));
         exit(EXIT_FAILURE);
     }
@@ -314,19 +314,24 @@ int MPI_Checkpoint_restore(MPI_Comm comm, MPI_Checkpoint* file) {
         exit(EXIT_FAILURE);
     }
     checkpoint->size = status.st_size;
-    checkpoint->data = mmap(0, checkpoint->size, PROT_READ, MAP_PRIVATE, checkpoint->fd, 0);
-    if (checkpoint->data == MAP_FAILED) {
-        perror("mmap");
-        exit(EXIT_FAILURE);
-    }
-    if (madvise(checkpoint->data, checkpoint->size, MADV_SEQUENTIAL) == -1) {
-        perror("madvise");
-        exit(EXIT_FAILURE);
+    if (checkpoint->size == 0) {
+        checkpoint->data = 0;
+    } else {
+        checkpoint->data = mmap(0, checkpoint->size, PROT_READ, MAP_PRIVATE, checkpoint->fd, 0);
+        if (checkpoint->data == MAP_FAILED) {
+            perror("mmap");
+            exit(EXIT_FAILURE);
+        }
+        if (madvise(checkpoint->data, checkpoint->size, MADV_SEQUENTIAL) == -1) {
+            perror("madvise");
+            exit(EXIT_FAILURE);
+        }
     }
     if (verbose) {
         fprintf(stderr, "rank %d restored from %s\n", rank, newfilename);
         fflush(stderr);
     }
+    checkpoint->communicator = comm;
     *file = checkpoint;
     return MPI_SUCCESS;
 }

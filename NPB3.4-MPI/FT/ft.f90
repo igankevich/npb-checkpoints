@@ -158,7 +158,7 @@
 
       do iter = iter_min, niter
 
-         if (iter .eq. iter/2 .and. iter_min .eq. 1) then
+         if (iter .eq. niter/2 .and. iter_min .eq. 1) then
              call mpi_checkpoint_create(comm_solve, checkpoint, ierr)
              if (ierr .eq. 0) then
                  call mpi_checkpoint_write(checkpoint, iter, 1, MPI_INTEGER, ierr)
